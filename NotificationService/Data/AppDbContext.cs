@@ -1,9 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MongoDB.Driver;
 
 namespace NotificationService.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options) { }
+    public readonly IMongoDatabase Database;
+
+    public AppDbContext(IMongoDatabase database)
+    {
+        Database = database;
+    }
+
+    // public IMongoCollection<Notification> Notifications =>
+    //     _database.GetCollection<Notification>("Notifications");
+
+    // // You can add more collections here as needed
 }

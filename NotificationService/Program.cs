@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using NotificationService.Data;
 using NotificationService.Extensions;
 
@@ -19,9 +20,18 @@ if (environment == "Docker")
 }
 builder.Configuration.AddEnvironmentVariables();
 
-builder.Services.AddDbContext<AppDbContext>(option =>
+var mongoConnection = builder.Configuration.GetConnectionString("DefaultConnection"); 
+builder.Services.AddSingleton<IMongoClient>(sp =>
 {
-    option.UseMySQL(builder.Configuration.GetConnectionString("DefaultConnection"));
+    return new MongoClient(mongoConnection);
+});
+
+builder.Services.AddScoped(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    var databaseName = new MongoUrl(mongoConnection).DatabaseName;
+    var database = client.GetDatabase(databaseName);
+    return new AppDbContext(database);
 });
 
 builder.Services.AddCustomCors();
@@ -69,5 +79,5 @@ app.UseAuthorization();
 app.UseCors(CorsExtensions.GetCorsPolicyName());
 
 app.MapControllers();
-app.ApplyPendingMigrations();
+app.EnsureDatabaseSetup();
 app.Run();

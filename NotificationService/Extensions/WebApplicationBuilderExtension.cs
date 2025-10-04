@@ -8,7 +8,7 @@ public static class WebApplicationBuilderExtension
 {
     public static WebApplicationBuilder AddAppAuthentication(this WebApplicationBuilder builder)
     {
-        var settingsSection = builder.Configuration.GetSection("ApiSettings");
+        var settingsSection = builder.Configuration.GetSection("JwtSettings");
 
         var secret = settingsSection.GetValue<string>("Secret");
         var issuer = settingsSection.GetValue<string>("Issuer");

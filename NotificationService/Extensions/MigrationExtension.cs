@@ -1,18 +1,18 @@
-using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using NotificationService.Data;
 
 namespace NotificationService.Extensions;
 
-public static class MigrationExtensions
+public static class MongoDbExtensions
 {
-    public static void ApplyPendingMigrations(this IHost app)
+    public static void EnsureDatabaseSetup(this IHost app)
     {
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        if (dbContext.Database.GetPendingMigrations().Any())
-        {
-            dbContext.Database.Migrate();
-        }
+        // var notifications = dbContext.Notifications;
+        // var indexKeys = Builders<Notification>.IndexKeys.Ascending(n => n.CreatedAt);
+        // var indexModel = new CreateIndexModel<Notification>(indexKeys);
+        // notifications.Indexes.CreateOne(indexModel);
     }
 }

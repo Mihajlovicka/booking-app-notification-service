@@ -16,5 +16,5 @@ public interface ICrudRepository<T>
     Task UpdateAsync(string id, T entity);
 
     // Delete an entity by its ID
-    Task DeleteAsync(string id);
+    Task DeleteAllForUserAsync(string id);
 }

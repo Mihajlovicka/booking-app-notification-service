@@ -6,6 +6,7 @@ using NotificationService.Data;
 using NotificationService.Extensions;
 using Serilog;
 using System.Diagnostics.Metrics;
+using NotificationService.WebSocket;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,20 +26,6 @@ if (environment == "Docker")
     
 }
 builder.Configuration.AddEnvironmentVariables();
-
-var mongoConnection = builder.Configuration.GetConnectionString("DefaultConnection"); 
-builder.Services.AddSingleton<IMongoClient>(sp =>
-{
-    return new MongoClient(mongoConnection);
-});
-
-builder.Services.AddScoped(sp =>
-{
-    var client = sp.GetRequiredService<IMongoClient>();
-    var databaseName = new MongoUrl(mongoConnection).DatabaseName;
-    var database = client.GetDatabase(databaseName);
-    return new AppDbContext(database);
-});
 
 builder.Services.AddCustomCors();
 builder.Services.AddKafkaServices(builder.Configuration);
@@ -92,12 +79,15 @@ app.Use(async (context, next) =>
                                new KeyValuePair<string, object?>("timestamp", timestamp));
 });
 
-app.UseSerilogRequestLogging(options =>
+if(environment == "Docker")
 {
-    options.IncludeQueryInRequestPath = true;
-});
+    app.UseSerilogRequestLogging(options =>
+    {
+        options.IncludeQueryInRequestPath = true;
+    });
 
-app.UseRequestResponseLogging();
+    app.UseRequestResponseLogging();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
@@ -120,10 +110,19 @@ app.UseExceptionHandler(builder =>
         }
     });
 });
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseCors(CorsExtensions.GetCorsPolicyName());
 
 app.MapControllers();
-app.EnsureDatabaseSetup();
+
+using (var scope = app.Services.CreateScope())
+{
+    var runner = scope.ServiceProvider.GetRequiredService<MongoMigrationRunner>();
+    await runner.RunAsync();
+}
+
+app.MapHub<NotificationHub>("api/ws/notifications");
+
 app.Run();

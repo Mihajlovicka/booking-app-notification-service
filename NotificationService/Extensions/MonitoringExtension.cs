@@ -14,7 +14,7 @@ public static class MonitoringExtensions
     )
     {
         var serviceName = Environment.GetEnvironmentVariable("SERVICE_NAME") ?? "unknown-service";
-        var collectorEndpoint = Environment.GetEnvironmentVariable("OTEL_COLLECTOR") ?? "";
+        var collectorEndpoint = Environment.GetEnvironmentVariable("OTEL_COLLECTOR") ?? "http://otel-collector:4317";
         var lokiEndpoint = Environment.GetEnvironmentVariable("LOKI") ?? "";
 
             
